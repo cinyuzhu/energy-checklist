@@ -1,43 +1,169 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-    <meta charset="UTF-8">
-    <title>神经多样性抵扰筛查问卷</title>
-    <script defer src="script.js"></script>
-    <style>
-        body { font-family: sans-serif; line-height: 1.6; padding: 1em; }
-        .section { margin-top: 2em; }
-        .question { margin-bottom: 1em; }
-        label { margin-right: 1em; }
-    </style>
+  <meta charset="UTF-8">
+  <title>神经多样性抵扰筛查问卷</title>
+  <script defer src="script.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2em; line-height: 1.6; }
+    .section { margin-bottom: 2em; }
+    .question { margin-bottom: 1em; }
+    label { display: block; font-weight: bold; margin-bottom: 0.2em; }
+    .scale { margin-left: 1em; }
+  </style>
 </head>
 <body>
-    <h1>神经多样性抵扰筛查问卷</h1>
-    <p>请选择每一项的问题强度（0 = 完全没有，4 = 经常/显著）</p>
+  <h1>神经多样性抵扰筛查问卷</h1>
+  <p>请选择每一项的问题强度（0 = 完全没有，3 = 经常/显著）</p>
+  <p>原始表格来源：<a href="https://www.facebook.com/photo/?fbid=867759181778523" target="_blank">Facebook 帖子</a></p>
 
-    <form id="checklistForm">
-        <div class="section">
-            <h2>I. 身体反应</h2>
-            <div class="question">
-                <label>1. 我的协调性变差</label><br>
-                <input type="radio" name="q1" value="0"> 0
-                <input type="radio" name="q1" value="1"> 1
-                <input type="radio" name="q1" value="2"> 2
-                <input type="radio" name="q1" value="3"> 3
-                <input type="radio" name="q1" value="4"> 4
-            </div>
+  <form id="checklistForm">
+    <div id="questionContainer"></div>
+    <button type="submit">提交</button>
+  </form>
 
-            <!-- Add more questions following the same structure -->
-        </div>
+  <div id="result" class="section" style="display: none;">
+    <h2>评分结果</h2>
+    <p id="scoreDisplay"></p>
+    <div id="sectionAverages"></div>
+  </div>
 
-        <!-- Repeat for other sections like 日常作息, 执行力, etc. -->
+  <script>
+    const sections = [
+      { title: "I. 身体反应", count: 7 },
+      { title: "II. 日常作息", count: 6 },
+      { title: "III. 社交互动", count: 5 },
+      { title: "IV. 任务执行", count: 6 },
+      { title: "V. 娱乐恢复", count: 3 },
+      { title: "VI. 情绪状态", count: 5 },
+      { title: "VII. 他人观察", count: 4 },
+    ];
 
-        <button type="submit">提交</button>
-    </form>
+    const questions = [
+      // I. 身体反应
+      "1. 我的协调性变差（更容易撞到、绊倒、头晕、失去平衡，站起来眼前发黑）",
+      "2. 我对光/声音/气味/触碰比平时更敏感、更难以忍受",
+      "3. 我的身体容易出现抵抗性疼痛（胃/脖/头痛）",
+      "4. 我的呼吸不顺畅或有部位身体紧绷（肩颈/胸口/四肢）",
+      "5. 我的自我刺激行为（搓摩/拍手/重复动作）显著增加",
+      "6. 我经常眼神发直或难以聚焦视线",
+      "7. 我比平时更容易生病或疼痛加剧",
 
-    <div id="result" class="section" style="display: none;">
-        <h2>评分结果</h2>
-        <p id="scoreDisplay"></p>
-    </div>
+      // II. 日常作息
+      "8. 食欲的持续异常（总是饿或完全没胃口）",
+      "9. 睡眠质量显著下降（入睡难/易醒/睡不深）",
+      "10. 即使不信通知刷手机、看视频、玩游戏等方式拖延入睡",
+      "11. 我很难按时吃饭或准备健康食物",
+      "12. 我对高西文或平常渴望特定食物/质地",
+      "13. 基本生活卫生（洗澡/刷牙）比平时困难得多",
+
+      // III. 社交互动
+      "14. 我对他人眼睛/肢体接触更敏感、更不适",
+      "15. 我对他人的言语更难理解",
+      "16. 我说话时卡壳/词不达意的情况增多",
+      "17. 我出现更多的重复用词/搅拌/模仿",
+      "18. 我想独自处理任何问题而感到躲避",
+
+      // IV. 任务执行
+      "19. 执行任何任务（即使是重要或我喜欢的）都更困难了",
+      "20. 我在工作/学习中丧失几乎所有热情",
+      "21. 面对新任务时产生少儿惊惧反应",
+      "22. 我无法组织计划，哪怕开始工作/实际推进也变慢了",
+      "23. 我无法停下开启的思路",
+      "24. 我的短期记忆/专注力明显下降",
+
+      // V. 娱乐恢复
+      "25. 我更依赖短视频/小游戏等即时娱乐",
+      "26. 我过去能深度沉浸、恢复精力的兴趣现在难投入",
+      "27. 我很少想起过去带来快乐活动或感觉不到期待",
+
+      // VI. 情绪状态
+      "28. 我的情绪容易强烈波动到难控制（如易怒、焦躁）",
+      "29. 我的情绪木/空洞几乎感受不到",
+      "30. 我经常莫名生气/不安/烦躁/紧张",
+      "31. 我容易无缘无故哭泣或因为平时不在乎的事情哭",
+      "32. 感觉到强烈的无价值感/羞耻感对自己失望",
+
+      // VII. 他人观察
+      "33. 有人（不止一人）主动问我“是不是很累”或说我看起来很憔悴/疲惫？",
+      "34. 有人（不止一人）评论我看起来更迟钝了（与我平时的状态相比）？",
+      "35. 有人（不止一人）问问题“是不是不高兴”或“发生了什么事”？",
+      "36. 有人（不止一人）指出我反应变慢了、慌张了，或者不像平时的自己？"
+    ];
+
+    const container = document.getElementById("questionContainer");
+
+    questions.forEach((text, i) => {
+      const div = document.createElement("div");
+      div.className = "question";
+
+      const label = document.createElement("label");
+      label.textContent = text;
+      div.appendChild(label);
+
+      for (let score = 0; score <= 3; score++) {
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = `q${i+1}`;
+        input.value = score;
+        input.id = `q${i+1}_${score}`;
+
+        const span = document.createElement("span");
+        span.className = "scale";
+        span.textContent = `${score}`;
+
+        div.appendChild(input);
+        div.appendChild(span);
+      }
+
+      container.appendChild(div);
+    });
+
+    document.getElementById("checklistForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      let totalScore = 0;
+      let unanswered = 0;
+      const sectionScores = [];
+
+      let index = 0;
+      for (const section of sections) {
+        let sectionSum = 0;
+        let sectionCount = 0;
+        for (let i = 0; i < section.count; i++, index++) {
+          const radios = document.getElementsByName(`q${index+1}`);
+          let answered = false;
+          for (let radio of radios) {
+            if (radio.checked) {
+              totalScore += parseInt(radio.value);
+              sectionSum += parseInt(radio.value);
+              answered = true;
+              break;
+            }
+          }
+          if (!answered) unanswered++;
+        }
+        sectionScores.push({ title: section.title, avg: (sectionSum / section.count).toFixed(2) });
+      }
+
+      const result = document.getElementById("result");
+      const scoreDisplay = document.getElementById("scoreDisplay");
+      const sectionDiv = document.getElementById("sectionAverages");
+      sectionDiv.innerHTML = "";
+
+      if (unanswered > 0) {
+        scoreDisplay.innerText = `请完成所有问题（还剩 ${unanswered} 个未答）。`;
+      } else {
+        scoreDisplay.innerText = `您的总分是 ${totalScore} 分。`;
+        sectionScores.forEach(s => {
+          const p = document.createElement("p");
+          p.textContent = `${s.title} 平均分: ${s.avg}`;
+          sectionDiv.appendChild(p);
+        });
+      }
+
+      result.style.display = "block";
+    });
+  </script>
 </body>
 </html>
