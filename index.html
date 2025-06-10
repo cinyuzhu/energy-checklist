@@ -2,20 +2,87 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>神经多样性抵扰筛查问卷</title>
+  <title>神经多样性耗竭筛查问卷</title>
   <script defer src="script.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 2em; line-height: 1.6; }
-    .section { margin-bottom: 2em; }
-    .question { margin-bottom: 1em; }
-    label { display: block; font-weight: bold; margin-bottom: 0.2em; }
-    .scale { margin-left: 1em; }
+    body {
+      font-family: sans-serif;
+      padding: 2em;
+      line-height: 1.6;
+    }
+  
+    .section {
+      margin-bottom: 2em;
+    }
+  
+    .question {
+      margin-bottom: 1.5em;
+      padding: 1em;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+  
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 0.4em;
+    }
+  
+    .scale-group {
+      display: flex;
+      gap: 0.8em;
+      margin-top: 0.5em;
+      flex-wrap: wrap;
+    }
+  
+    .scale-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.3em;
+      padding: 0.4em 0.6em;
+      border: 1px solid #999;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: normal;
+      font-size: 1rem;
+      transition: background-color 0.2s;
+    }
+  
+    .scale-group label:hover {
+      background-color: #f0f0f0;
+    }
+  
+    .scale-group input[type="radio"] {
+      transform: scale(1.2);
+      margin-right: 0.2em;
+    }
+  
+    .scale-group input[type="radio"]:focus-visible {
+      outline: 2px solid #0077cc;
+    }
+
+    .signal-bar {
+  height: 10px;
+  margin-bottom: 1em;
+  border-radius: 4px;
+}
+.signal-green {
+  background-color: #4CAF50;
+}
+.signal-yellow {
+  background-color: #FFC107;
+}
+.signal-red {
+  background-color: #F44336;
+}
+
   </style>
+  
 </head>
 <body>
-  <h1>神经多样性抵扰筛查问卷</h1>
-  <p>请选择每一项的问题强度（0 = 完全没有，3 = 经常/显著）</p>
-  <p>原始表格来源：<a href="https://www.facebook.com/photo/?fbid=867759181778523" target="_blank">Facebook 帖子</a></p>
+  <h1>神经多样耗竭筛查问卷</h1>
+  <p>请选择每一项的问题强度（0=完全没有/从不，1=很少/轻微，2=有时/中等程度，3=经常/显著，4=频繁/严重）</p>
+  <p>原始表格来源：<a href="https://mp.weixin.qq.com/s/3CjflttsQOmg34Qa_VQNaA" target="_blank">文章</a></p>
 
   <form id="checklistForm">
     <div id="questionContainer"></div>
@@ -26,6 +93,7 @@
     <h2>评分结果</h2>
     <p id="scoreDisplay"></p>
     <div id="sectionAverages"></div>
+    <div id="scoreSuggestion"></div>
   </div>
 
   <script>
@@ -40,56 +108,57 @@
     ];
 
     const questions = [
-      // I. 身体反应
-      "1. 我的协调性变差（更容易撞到、绊倒、头晕、失去平衡，站起来眼前发黑）",
-      "2. 我对光/声音/气味/触碰比平时更敏感、更难以忍受",
-      "3. 我的身体容易出现抵抗性疼痛（胃/脖/头痛）",
-      "4. 我的呼吸不顺畅或有部位身体紧绷（肩颈/胸口/四肢）",
-      "5. 我的自我刺激行为（搓摩/拍手/重复动作）显著增加",
-      "6. 我经常眼神发直或难以聚焦视线",
-      "7. 我比平时更容易生病或疼痛加剧",
+  // I. 身体反应
+  "1. 我的协调性变差差（更容易撞到、绊倒、头晕、失去平衡、站起来眼前发黑）",
+  "2. 我对光线/声音/气味/触碰比平时更敏感、更难以忍受",
+  "3. 我感到身体有莫名的沉重感或堵塞感（胃/喉/头部）",
+  "4. 我感到呼吸不畅或身体部位异常紧绷（肩颈/胸口/四肢）",
+  "5. 我的自我刺激行为（摇摆/拍手/重复动作）显著增加",
+  "6. 我经常眼神发直或难以聚焦视线",
+  "7. 我比平时更容易生病或疼痛加剧",
 
-      // II. 日常作息
-      "8. 食欲的持续异常（总是饿或完全没胃口）",
-      "9. 睡眠质量显著下降（入睡难/易醒/睡不深）",
-      "10. 即使不信通知刷手机、看视频、玩游戏等方式拖延入睡",
-      "11. 我很难按时吃饭或准备健康食物",
-      "12. 我对高西文或平常渴望特定食物/质地",
-      "13. 基本生活卫生（洗澡/刷牙）比平时困难得多",
+  // II. 日常作息
+  "8. 食欲明显持续异常（总是饿或完全没胃口）",
+  "9. 睡眠质量显著下降（入睡难/易醒/睡不深）",
+  "10. 我明知自己很累，却忍不住通过刷手机、看视频、玩游戏等方式拖延入睡。",
+  "11. 我更难按时吃饭或准备健康食物",
+  "12. 我吃东西没味道或异常渴望特定食物/质地",
+  "13. 我维持基本卫生（洗澡/刷牙）比平时困难得多",
 
-      // III. 社交互动
-      "14. 我对他人眼睛/肢体接触更敏感、更不适",
-      "15. 我对他人的言语更难理解",
-      "16. 我说话时卡壳/词不达意的情况增多",
-      "17. 我出现更多的重复用词/搅拌/模仿",
-      "18. 我想独自处理任何问题而感到躲避",
+  // III. 社交互动
+  "14. 我对他人眼神/肢体接触更敏感、更不适",
+  "15. 我对话中卡壳/词不达意情况增多",
+  "16. 我想到社交就感到强烈厌倦/抗拒/恐惧",
+  "17. 我即使和亲近的人在一起也感到负担",
+  "18. 我想到能独处不用回应任何人就感到解脱",
 
-      // IV. 任务执行
-      "19. 执行任何任务（即使是重要或我喜欢的）都更困难了",
-      "20. 我在工作/学习中丧失几乎所有热情",
-      "21. 面对新任务时产生少儿惊惧反应",
-      "22. 我无法组织计划，哪怕开始工作/实际推进也变慢了",
-      "23. 我无法停下开启的思路",
-      "24. 我的短期记忆/专注力明显下降",
+  // IV. 任务执行
+  "19. 我启动任何任务（即使是重要或我喜欢的）都更困难了",
+  "20. 我对工作/学习内容失去几乎所有热情",
+  "21. 我一想到上班/上学就身心疲惫甚至恐慌",
+  "22. 我更难遵循指示/切换任务，哪伯开始工作实际推进也变慢了",
+  "23. 我反复思考辞职/休学而非解决问题",
+  "24. 我的短期记忆力/专注力明显下降",
 
-      // V. 娱乐恢复
-      "25. 我更依赖短视频/小游戏等即时娱乐",
-      "26. 我过去能深度沉浸、恢复精力的兴趣现在难投入",
-      "27. 我很少想起过去带来快乐活动或感觉不到期待",
+  // V. 娱乐恢复
+  "25. 我更依赖短视频/小游戏等即时娱乐",
+  "26. 我过去能深度沉浸、恢复精力的兴趣现在难投入",
+  "27. 我很少想起过去带来快乐的活动或感觉不到期待",
 
-      // VI. 情绪状态
-      "28. 我的情绪容易强烈波动到难控制（如易怒、焦躁）",
-      "29. 我的情绪木/空洞几乎感受不到",
-      "30. 我经常莫名生气/不安/烦躁/紧张",
-      "31. 我容易无缘无故哭泣或因为平时不在乎的事情哭",
-      "32. 感觉到强烈的无价值感/羞耻感对自己失望",
+  // VI. 情绪状态
+  "28. 我的情绪异常强烈/波动剧烈难控制（如易怒，焦躁）",
+  "29. 我的情绪麻木/空洞/几乎感受不到",
+  "30. 我经常莫名坐立不安/烦躁/紧张",
+  "31. 我更容易无缘无故想哭或因为平时不在乎的事情哭",
+  "32. 我感到强烈无价值感/羞耻感/对自己失望",
 
-      // VII. 他人观察
-      "33. 有人（不止一人）主动问我“是不是很累”或说我看起来很憔悴/疲惫？",
-      "34. 有人（不止一人）评论我看起来更迟钝了（与我平时的状态相比）？",
-      "35. 有人（不止一人）问问题“是不是不高兴”或“发生了什么事”？",
-      "36. 有人（不止一人）指出我反应变慢了、慌张了，或者不像平时的自己？"
-    ];
+  // VII. 他人观察
+  "33. 有人（不止一人）主动询问我“是不是很累”或说我看起来很憔悴/疲惫？",
+  "34. 有人（不止一人）评论说我看起来瘦了或胖了（与我平时的状态相比）？",
+  "35. 有人（不止一人）询问我“是不是不高兴”或“发生了什么事”？",
+  "36. 有人（不止一人）指出我反应变慢了、健忘了，或者不像平时的自己？",
+];
+
 
     const container = document.getElementById("questionContainer");
 
@@ -101,23 +170,88 @@
       label.textContent = text;
       div.appendChild(label);
 
-      for (let score = 0; score <= 3; score++) {
+      const scaleGroup = document.createElement("div");
+      scaleGroup.className = "scale-group";
+
+      for (let score = 0; score <= 4; score++) {
+        const wrapper = document.createElement("label");
+        wrapper.style.display = "flex";
+        wrapper.style.alignItems = "center";
+        wrapper.style.gap = "0.3em";
+
         const input = document.createElement("input");
         input.type = "radio";
         input.name = `q${i+1}`;
         input.value = score;
-        input.id = `q${i+1}_${score}`;
 
         const span = document.createElement("span");
-        span.className = "scale";
-        span.textContent = `${score}`;
+        span.textContent = score;
 
-        div.appendChild(input);
-        div.appendChild(span);
+        wrapper.appendChild(input);
+        wrapper.appendChild(span);
+        scaleGroup.appendChild(wrapper);
+
+
       }
 
+      div.appendChild(scaleGroup);
       container.appendChild(div);
     });
+
+    function generateSuggestion(total, sectionScores) {
+  const anyOver35 = sectionScores.some(s => parseFloat(s.avg) >= 3.5);
+  const over25Count = sectionScores.filter(s => parseFloat(s.avg) >= 2.5).length;
+
+  if (total > 70 || anyOver35) {
+    return `🔴🔴🔴 <strong>红灯（马上停止）</strong><br>
+    - 总分 > 70 或 单个维度平均分 ≥ 3.5<br>
+    - 身心资源极度耗竭，自我调节严重受损。请立即寻求支持与专业帮助。
+    <br><br>
+    <h2>建议：</h2>
+    <ul>
+      <li><strong>熔断机制：</strong>预留的病假/年假拿出来，停止工作学习；关闭信息推送，使用准备好的自动回复模板。</li>
+      <li><strong>洞穴时间（哥布林模式）：</strong>
+        <ul>
+          <li>感官休眠（低灯光，压力毯）</li>
+          <li>简单饮食（代餐，清淡饮食，保证蛋白质摄入和饮水）</li>
+          <li>低刺激活动（拼图、看书、绘画、乐高、图谱、重复观看喜欢的节目）</li>
+          <li>寻求外援（平静的伙伴、能为你做饭的人、专业人士）</li>
+        </ul>
+      </li>
+    </ul>`;
+  } else if ((total >= 30 && total <= 70) || over25Count >= 1) {
+    return `🟡🟡🟡 <strong>黄灯（减速慢行）</strong><br>
+    - 总分 30–70 或 1–2 个维度平均分 ≥ 2.5<br>
+    - 出现中度耗竭信号，建议调整节奏，增加休息与支持。
+    <br><br>
+    <h2>建议：</h2>
+    <ul>
+      <li><strong>减速慢行：</strong>对以下 3 个方面减少约 20% 的总量：
+        <ul>
+          <li>减少任务：将时间上不算急切的任务后移</li>
+          <li>降低标准：完成任务达到 60%–80% 即可</li>
+          <li>减少打扰：减少社交、隔绝干扰刺激</li>
+        </ul>
+      </li>
+      <li><strong>大脑节能：</strong>安排重复性、低决策任务，推迟分析性任务；使用辅助工具（如过渡时间、语音转文字、定时提醒等）。</li>
+      <li><strong>能量补给：</strong>优先睡眠、休息、感官排毒，沉浸在恢复精力的兴趣中。</li>
+    </ul>`;
+  } else {
+    return `🟢🟢🟢 <strong>绿灯（保持前进）</strong><br>
+    - 总分 < 30 且 大多数维度平均分 < 1.5，无单个维度平均分 > 2.0<br>
+    - 状态接近个人基线，建议持续关注和自我照护。
+    <br><br>
+    <h2>建议：</h2>
+    <ul>
+      <li><strong>未雨绸缪：</strong>在黄灯和红灯区，你不大可能有足够的精力妥帖处理一切再休息，所以，在绿灯状态就为可能的崩溃做好准备。</li>
+      <li><strong>预设“撤离模版”：</strong>提前准备“我现在在忙，等会儿聊”或“我最近状态太差了，请给我（多少时间）恢复/（具体帮助）/（紧急联系人）”。</li>
+      <li><strong>准备“战略物资”：</strong>提前准备“安全食物”、崩溃时用的感知觉工具等。</li>
+      <li><strong>给自己“不做许可”：</strong>写下允许自己停下来的情境、休息的好处、安排妥当的准备。</li>
+      <li><strong>保持状态：</strong>定期进行“脑排毒”活动，如 5 分钟放空、10 分钟身体扫描、1 小时爱好时间。</li>
+      <li><strong>任务冲刺：</strong>利用状态良好的时间处理困难任务，并为未来状态波动做好铺垫。</li>
+    </ul>`;
+  }
+}
 
     document.getElementById("checklistForm").addEventListener("submit", function (e) {
       e.preventDefault();
@@ -129,7 +263,6 @@
       let index = 0;
       for (const section of sections) {
         let sectionSum = 0;
-        let sectionCount = 0;
         for (let i = 0; i < section.count; i++, index++) {
           const radios = document.getElementsByName(`q${index+1}`);
           let answered = false;
@@ -149,7 +282,9 @@
       const result = document.getElementById("result");
       const scoreDisplay = document.getElementById("scoreDisplay");
       const sectionDiv = document.getElementById("sectionAverages");
+      const suggestionDiv = document.getElementById("scoreSuggestion");
       sectionDiv.innerHTML = "";
+      suggestionDiv.innerHTML = "";
 
       if (unanswered > 0) {
         scoreDisplay.innerText = `请完成所有问题（还剩 ${unanswered} 个未答）。`;
@@ -160,10 +295,38 @@
           p.textContent = `${s.title} 平均分: ${s.avg}`;
           sectionDiv.appendChild(p);
         });
-      }
+        // add colarbar
+        const signalBar = document.createElement("div");
+        signalBar.classList.add("signal-bar");
 
+        if (totalScore > 70 || sectionScores.some(s => parseFloat(s.avg) >= 3.5)) {
+          signalBar.classList.add("signal-red");
+        } else if ((totalScore >= 30 && totalScore <= 70) || sectionScores.filter(s => parseFloat(s.avg) >= 2.5).length >= 1) {
+          signalBar.classList.add("signal-yellow");
+        } else {
+          signalBar.classList.add("signal-green");
+        }
+        suggestionDiv.appendChild(signalBar);
+        suggestionDiv.innerHTML = generateSuggestion(totalScore, sectionScores);
+      }
+      document.getElementById("additionalNotes").style.display = "block";
       result.style.display = "block";
+      document.getElementById("actionGuidelines").style.display = "block";
+
     });
   </script>
+
+<div id="additionalNotes" class="section" style="display: none;">
+  <h2>重要补充说明</h2>
+  <ol>
+    <li><strong>基线差异：</strong>每个人的基线和耐受度不同。即使分数在绿灯区，如果你感觉偏离了自己的“正常状态”，也应重视；若你倾向于低估自身感受，可考虑将分数乘以 1.2–1.5。</li>
+    <li><strong>“超强红灯”信号：</strong>出现解离感、持续 48 小时以上完全失眠、自伤念头等情况，请立即急诊。</li>
+    <li><strong>动态过程：</strong>状态是动态变化的，建议每 1–2 周或状态变化时测评。</li>
+    <li><strong>非诊断工具：</strong>本问卷为筛查用途，不能替代专业诊断。黄灯状态建议尽早寻求专业评估，红灯状态请尽快求助。</li>
+    <li><strong>他人评价维度：</strong>该维度反映外部观察，尤其对有述情障碍或内感受缺乏者尤为重要。请重视高分情况。</li>
+    <li><strong>注意生理因素：</strong>月经周期、慢性病、疼痛等也会显著影响能量水平和状态。</li>
+  </ol>
+</div>
+
 </body>
 </html>
